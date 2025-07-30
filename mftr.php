@@ -104,6 +104,30 @@ function runner()
                 $this->testsPassed,
                 $this->testsFailed);
         }
+
+        public function resolveCallerLocation(array $trace): string {
+            foreach ($trace as $key => $frame) {
+                if (
+                    ($frame['function'] ?? '') === 'runTest'
+                    && str_starts_with($frame['class'] ?? '', 'class@anonymous')
+                ) {
+                    $fr = $trace[$key-2] ?? [];
+                    return sprintf("%s:%s", $fr['file'] ?? 'unknown', $fr['line'] ?? '0');
+                }
+            }
+            return "unknown:0";
+        }
+
+        public function printResult(string $message, bool $success, ?string $location = null, bool $assertionError = true): void
+        {
+            $message = $assertionError ? "\033[0m$message" : "$message\033[0m";
+            printf(
+                "   \033[%sm%s $message%s\n",
+                $success ? "92" : "91",
+                $assertionError ? ($success ? '✔' : '✘') : '⚠️',
+                $location ? " (in $location)" : ""
+            );
+        }
     };
 };
 
@@ -118,33 +142,44 @@ function assertThat(string $description, callable $assertion)
     try {
         if ($assertion()) {
             runner()->assertionPassed();
-            echo "  \033[92m✔\033[97m $description\n";
+            runner()->printResult($description, true);
         } else {
             runner()->assertionFailed();
-            printf("  \033[91m✘\033[97m Failed to assert that %s\n", $description);
+            $location = runner()->resolveCallerLocation(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS));
+            runner()->printResult($description, false, $location);
         }
     } catch (Throwable $e) {
         runner()->assertionFailed();
-        printf("  \033[91m⚠️ %s\033[97m\n", $e->getMessage());
+        $location = runner()->resolveCallerLocation(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS));
+        runner()->printResult($e->getMessage(), false, $location, false);
     }
 }
 
 function expectThrowable(string $throwable, string $description, callable $callback)
 {
-    $article = in_array(strtolower($throwable[0]), ['a', 'e', 'i', 'o']) ? 'an' : 'a';
+    static $article = fn(string $throwable) => in_array(strtolower($throwable[0]), ['a', 'e', 'i', 'o']) ? 'an' : 'a';
+
     try {
         $callback();
         runner()->assertionFailed();
-        echo "  \033[91m✘ Expected $description to throw $article '$throwable' throwable, got none\033[97m\n";
+        $location = runner()->resolveCallerLocation(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS));
+        runner()->printResult(sprintf(
+            "Expected $description to throw %s '$throwable' throwable, got none",
+                $article($throwable),
+            ), false, $location);
     } catch (Throwable $e) {
         if ($e instanceof $throwable) {
             runner()->assertionPassed();
-            echo "  \033[92m✔\033[97m $description throws $article $throwable \n";
+            runner()->printResult(sprintf("$description throws %s %s", $article($throwable), $throwable), true);
         } else {
             runner()->assertionFailed();
             $exceptionClass = get_class($e);
-            $aOrAn = in_array(strtolower($exceptionClass[0]), ['a', 'e', 'i', 'o']) ? 'an' : 'a';
-            echo "  \033[91m✘ Expected $description to throw $article '$throwable', but $aOrAn '$exceptionClass' was thrown\033[97m\n";
+            $location = runner()->resolveCallerLocation(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS));
+            runner()->printResult(sprintf(
+                "Expected $description to throw %s '$throwable', but %s '$exceptionClass' was thrown",
+                $article($throwable),
+                $article($exceptionClass)
+            ), false, $location);
         }
     }
 }

@@ -110,11 +110,12 @@ Run your test file:
 If it fails:
 ```shell
 🧪 The feature is working
-  ✘ Failed to assert that true is true
+  ✘ Failed to assert that true is true (in /path/to/test-file.php:10)
 🚫 (assertions: 0 passed / 1 total)
 
 📃 1 test (0 passed, 1 failed)
 ```
+The error message of failed assertions show the path of the file and the line (it may be clickable in your IDE).
 
 ### ExpectThrowable
 
@@ -136,7 +137,7 @@ Result:
 If a Throwable of an unexpected type is thrown:
 ```shell
 🧪 testing exceptions
-  ✘ Expected it may fail to throw an 'InvalidArgumentException', but an 'Exception' was thrown
+  ✘ Expected it may fail to throw an 'InvalidArgumentException', but an 'Exception' was thrown (in /path/fo/test-file.php:10)
 🚫 (assertions: 0 passed / 1 total)
 
 📃 1 test (0 passed, 1 failed)
@@ -145,7 +146,7 @@ If a Throwable of an unexpected type is thrown:
 If no `Throwable` is thrown:
 ```shell
 🧪 testing exceptions
-  ✘ Expected it may fail to throw an 'Exception' throwable, got none
+  ✘ Expected it may fail to throw an 'Exception' throwable, got none (in /path/to/test-file.php:10)
 🚫 (assertions: 0 passed / 1 total)
 
 📃 1 test (0 passed, 1 failed)
