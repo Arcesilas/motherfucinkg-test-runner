@@ -173,12 +173,6 @@ foreach (glob(__DIR__ . '/tests/*.test.php') as $file) {
 ```
 Do I really need to tell you not to forget to use `require_once` instead of `require` in your tests files if you want to be able to run them individually or all together?
 
-## Functions names conflict
-
-If MotherFucking Test Runner's functions conflict with some of yours, just add a namespace (of your choice, you're free) in the `mftr.php` file and "*import*" the functions you need in your test files.
-
-You are free to modify the file, it's not even in `vendor`.
-
 ## Extending MotherFucking Test Runner
 
 If you're lazy (and you should be), you might want custom assertions.
